@@ -7,7 +7,7 @@ import { TonConnectUIProvider } from '@tonconnect/ui-react';
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
     <TonConnectUIProvider
-      manifestUrl={`${window.location.origin}/tonconnect-manifest.json`}
+      manifestUrl={`${window.location.origin}/tonconnect-manifest.json?v=${new Date().getTime()}`}
       language="en"
     >
       <App />
