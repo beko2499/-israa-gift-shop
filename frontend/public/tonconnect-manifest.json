@@ -1,7 +1,7 @@
 {
-    "url": "http://localhost:5173",
+    "url": "https://israa-gift-shop.onrender.com",
     "name": "متجر إسراء للهدايا",
-    "iconUrl": "http://localhost:5173/logo.png",
-    "termsOfUseUrl": "http://localhost:5173/terms.txt",
-    "privacyPolicyUrl": "http://localhost:5173/privacy.txt"
+    "iconUrl": "https://israa-gift-shop.onrender.com/logo.png",
+    "termsOfUseUrl": "https://israa-gift-shop.onrender.com/terms.txt",
+    "privacyPolicyUrl": "https://israa-gift-shop.onrender.com/privacy.txt"
 }
