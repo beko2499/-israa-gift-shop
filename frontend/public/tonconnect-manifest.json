@@ -1,0 +1,7 @@
+{
+    "url": "http://localhost:5173",
+    "name": "متجر إسراء للهدايا",
+    "iconUrl": "http://localhost:5173/logo.png",
+    "termsOfUseUrl": "http://localhost:5173/terms.txt",
+    "privacyPolicyUrl": "http://localhost:5173/privacy.txt"
+}

@@ -1,0 +1,45 @@
+@import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&family=Amiri:wght@400;700&display=swap');
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply bg-cream-paper text-espresso font-sans antialiased;
+    font-family: 'Cairo', sans-serif;
+    /* Random / Organic Dotted Pattern (Terrazzo Style) */
+    background-color: #fdfbf7;
+    background-image:
+      radial-gradient(#8d7458 2.5px, transparent 2.5px),
+      radial-gradient(#8d7458 1.5px, transparent 1.5px),
+      radial-gradient(rgba(141, 116, 88, 0.4) 3px, transparent 3px);
+    background-size: 53px 53px, 41px 41px, 79px 79px;
+    background-position: 0 0, 20px 20px, 40px 10px;
+  }
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  @apply font-serif text-espresso;
+  font-family: 'Amiri', serif;
+}
+
+.btn-primary {
+  @apply bg-porcelain text-white px-4 py-2 rounded-lg hover:bg-porcelain-hover transition-colors shadow-sm font-serif disabled:opacity-50 disabled:cursor-not-allowed;
+  font-family: 'Cairo', sans-serif;
+  @apply font-bold;
+}
+
+.btn-secondary {
+  @apply border border-sepia text-sepia px-4 py-2 rounded-lg hover:bg-sepia hover:text-white transition-colors font-serif;
+  font-family: 'Cairo', sans-serif;
+  @apply font-bold;
+}
+
+.card {
+  @apply bg-white/90 border border-cream shadow-vintage rounded-xl p-4 backdrop-blur-sm;
+}
