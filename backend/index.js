@@ -170,6 +170,17 @@ app.post('/api/withdraw', async (req, res) => {
     });
 });
 
+const path = require('path');
+
+// ... (API Routes above)
+
+// --- Serve Frontend (Production) ---
+app.use(express.static(path.join(__dirname, '../frontend/dist')));
+
+app.get('*', (req, res) => {
+    res.sendFile(path.join(__dirname, '../frontend/dist/index.html'));
+});
+
 app.listen(PORT, () => {
     console.log(`Server running on port ${PORT}`);
 });
