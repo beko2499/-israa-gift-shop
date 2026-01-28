@@ -92,7 +92,8 @@ app.get('/api/gifts', (req, res) => {
 
 app.get('/api/deposit-address', (req, res) => {
     if (tonService.wallet) {
-        res.json({ address: tonService.wallet.address.toString() });
+        // Use bounceable: false (UQ...) to prevent bounces for uninitialized wallets
+        res.json({ address: tonService.wallet.address.toString({ bounceable: false }) });
     } else {
         res.status(503).json({ error: "Initializing..." });
     }

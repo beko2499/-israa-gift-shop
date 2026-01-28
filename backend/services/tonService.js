@@ -29,7 +29,7 @@ class TonService {
             this.wallet = WalletContractV4.create({ workchain: 0, publicKey: this.keyPair.publicKey });
             this.walletContract = this.client.open(this.wallet);
             this.isInitialized = true;
-            console.log("TON Wallet Initialized:", this.wallet.address.toString());
+            console.log("TON Wallet Initialized:", this.wallet.address.toString({ bounceable: false }));
         } catch (error) {
             console.error("Failed to initialize TON Wallet:", error);
         }
