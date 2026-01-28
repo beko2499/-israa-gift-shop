@@ -45,6 +45,9 @@ async function pollDeposits() {
 
         for (const tx of transactions) {
             if (tx.inMessage && tx.inMessage.info.type === 'internal') {
+                // Generate a unique transaction ID (using lt and hash)
+                const txHash = `${tx.lt}_${tx.hash().toString('hex')}`;
+
                 const amount = Number(tx.inMessage.info.value.coins) / 1e9;
 
                 // Try to parse comment (Memo)
@@ -61,22 +64,37 @@ async function pollDeposits() {
                     }
                 } catch (e) { /* ignore parse error */ }
 
-                console.log(`[DEBUG] Tx Detected: ${amount} TON, Memo: "${memo}"`);
-
                 // Check if it's a User Deposit
                 if (amount > 0 && memo.startsWith('user_')) {
                     const userId = memo.split('user_')[1].trim();
-                    console.log(`REAL DEPOSIT DETECTED: ${amount} TON for ${userId}`);
 
-                    // Naive Balance Update (In prod, use transactions table to prevent doubles)
-                    db.run("UPDATE users SET balance = balance + ? WHERE telegram_id = ?", [amount, userId], (err) => {
-                        if (!err) {
-                            console.log(`Credited ${amount} to ${userId}`);
-                            // Log Deposit
-                            db.run("INSERT INTO transactions (user_id, type, amount, related_id) VALUES (?, 'deposit', ?, ?)", [userId, amount, 'blockchain_transfer']);
-                            // Notify User
-                            bot.telegram.sendMessage(userId, `💎 **تم استلام إيداع!**\n\n✅ المبلغ: ${amount} TON\nرصيدك الآن محدث.`).catch(e => { });
+                    // CHECK IF ALREADY PROCESSED (PREVENT DUPLICATES)
+                    db.get("SELECT tx_hash FROM processed_txs WHERE tx_hash = ?", [txHash], (err, row) => {
+                        if (row) {
+                            // Already processed, skip
+                            return;
                         }
+
+                        console.log(`NEW DEPOSIT DETECTED: ${amount} TON for ${userId} (tx: ${txHash})`);
+
+                        // Mark as processed FIRST to prevent race conditions
+                        db.run("INSERT INTO processed_txs (tx_hash) VALUES (?)", [txHash], (err) => {
+                            if (err) {
+                                console.error("Failed to mark tx as processed:", err);
+                                return; // Don't credit if we can't mark as processed
+                            }
+
+                            // Now safely credit the balance
+                            db.run("UPDATE users SET balance = balance + ? WHERE telegram_id = ?", [amount, userId], (err) => {
+                                if (!err) {
+                                    console.log(`Credited ${amount} to ${userId}`);
+                                    // Log Deposit
+                                    db.run("INSERT INTO transactions (user_id, type, amount, related_id) VALUES (?, 'deposit', ?, ?)", [userId, amount, txHash]);
+                                    // Notify User
+                                    bot.telegram.sendMessage(userId, `💎 **تم استلام إيداع!**\n\n✅ المبلغ: ${amount} TON\nرصيدك الآن محدث.`).catch(e => { });
+                                }
+                            });
+                        });
                     });
                 }
             }
@@ -87,6 +105,7 @@ async function pollDeposits() {
     setTimeout(pollDeposits, 15000);
 }
 pollDeposits();
+
 
 
 // --- API Routes ---
@@ -176,26 +195,49 @@ app.post('/api/buy', (req, res) => {
 
 app.post('/api/withdraw', async (req, res) => {
     const { userId, amount, address } = req.body;
+
+    // Validate input
+    if (!userId || !amount || !address) {
+        return res.status(400).json({ error: "Missing required fields" });
+    }
+
+    const fee = 0.04;
+    const netAmount = amount - fee;
+    if (netAmount <= 0) return res.status(400).json({ error: "Amount too small" });
+
+    // Use a transaction-like approach: deduct first, then transfer
     db.get("SELECT balance FROM users WHERE telegram_id = ?", [userId], async (err, row) => {
         if (err || !row) return res.status(400).json({ error: "User not found" });
         if (row.balance < amount) return res.status(400).json({ error: "Insufficient balance" });
 
-        const fee = 0.04;
-        const netAmount = amount - fee;
-        if (netAmount <= 0) return res.status(400).json({ error: "Amount too small" });
+        // STEP 1: Deduct balance IMMEDIATELY to prevent double-spend
+        db.run("UPDATE users SET balance = balance - ? WHERE telegram_id = ?", [amount, userId], async (err) => {
+            if (err) return res.status(500).json({ error: "Database error" });
 
-        const txSuccess = await tonService.sendTransfer(address, netAmount.toString(), `Withdrawal info`);
-        if (txSuccess) {
-            db.run("UPDATE users SET balance = balance - ? WHERE telegram_id = ?", [amount, userId], (err) => {
-                // Log Withdraw
-                db.run("INSERT INTO transactions (user_id, type, amount, related_id) VALUES (?, 'withdraw', ?, ?)", [userId, -amount, 'blockchain_transfer']);
-                res.json({ success: true });
-            });
-        } else {
-            res.status(500).json({ error: "Transfer failed" });
-        }
+            // STEP 2: Attempt blockchain transfer
+            try {
+                const txSuccess = await tonService.sendTransfer(address, netAmount.toString(), `Withdrawal`);
+
+                if (txSuccess) {
+                    // Log successful withdrawal
+                    db.run("INSERT INTO transactions (user_id, type, amount, related_id) VALUES (?, 'withdraw', ?, ?)",
+                        [userId, -amount, 'blockchain_transfer']);
+                    res.json({ success: true });
+                } else {
+                    // ROLLBACK: Restore balance if transfer failed
+                    db.run("UPDATE users SET balance = balance + ? WHERE telegram_id = ?", [amount, userId]);
+                    res.status(500).json({ error: "Transfer failed, balance restored" });
+                }
+            } catch (txErr) {
+                // ROLLBACK on exception
+                console.error("Withdrawal error:", txErr);
+                db.run("UPDATE users SET balance = balance + ? WHERE telegram_id = ?", [amount, userId]);
+                res.status(500).json({ error: "Transfer error, balance restored" });
+            }
+        });
     });
 });
+
 
 const path = require('path');
 

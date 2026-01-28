@@ -50,6 +50,12 @@ db.serialize(() => {
     key TEXT PRIMARY KEY,
     value REAL DEFAULT 0
   )`);
+
+  // Track processed blockchain transactions to prevent duplicates
+  db.run(`CREATE TABLE IF NOT EXISTS processed_txs (
+    tx_hash TEXT PRIMARY KEY,
+    processed_at DATETIME DEFAULT CURRENT_TIMESTAMP
+  )`);
 });
 
 
