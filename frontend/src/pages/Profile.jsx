@@ -44,6 +44,20 @@ const Profile = () => {
                 <h2 className="text-2xl font-bold text-espresso">الملف الشخصي</h2>
             </div>
 
+            {/* Mock Data Warning */}
+            {user.is_mock && (
+                <div className="bg-amber-50 border border-amber-200 p-4 rounded-xl flex gap-3 items-start mb-6">
+                    <span className="material-icons-outlined text-amber-600">warning</span>
+                    <div className="text-sm text-amber-800">
+                        <p className="font-bold mb-1">وضع التطوير (Dev Mode)</p>
+                        <p className="opacity-80 leading-relaxed text-xs">
+                            يتم عرض بيانات وهمية لأن التطبيق مفتوح خارج تيليجرام.
+                            افتح التطبيق من <strong>داخل بوت تيليجرام</strong> لرؤية بياناتك الحقيقية.
+                        </p>
+                    </div>
+                </div>
+            )}
+
             {/* Profile Card */}
             <div className="card mb-6 bg-white border border-sepia/10 shadow-lg relative overflow-hidden text-center p-6">
                 <div className="w-24 h-24 bg-gradient-to-tr from-espresso to-[#6F4E37] rounded-full mx-auto mb-4 flex items-center justify-center shadow-lg border-4 border-white">
