@@ -13,26 +13,6 @@ const db = new sqlite3.Database(dbPath, (err) => {
 
 db.serialize(() => {
   // Users table
-  db.run(`CREATE TABLE IF NOT EXISTS users (
-    telegram_id TEXT PRIMARY KEY,
-    balance REAL DEFAULT 0,
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-  )`);
-
-  // Gifts table (Updated for NFT support)
-  db.run(`CREATE TABLE IF NOT EXISTS gifts (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    name TEXT NOT NULL,
-    description TEXT,
-    price REAL, -- Can be NULL if deposited but not listed for sale
-    image_url TEXT,
-    nft_address TEXT UNIQUE, -- The On-Chain Address of the NFT Item (Telegram Gift)
-    owner_id TEXT NOT NULL,
-    status TEXT DEFAULT 'deposited', -- 'deposited' (in bot inv), 'listed' (on market), 'sold', 'withdrawn'
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY(owner_id) REFERENCES users(telegram_id)
-  )`);
-
   // Transactions table
   db.run(`CREATE TABLE IF NOT EXISTS transactions (
     id INTEGER PRIMARY KEY AUTOINCREMENT,

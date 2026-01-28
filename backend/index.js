@@ -68,7 +68,13 @@ async function pollDeposits() {
 
                     // Naive Balance Update (In prod, use transactions table to prevent doubles)
                     db.run("UPDATE users SET balance = balance + ? WHERE telegram_id = ?", [amount, userId], (err) => {
-                        if (!err) console.log(`Credited ${amount} to ${userId}`);
+                        if (!err) {
+                            console.log(`Credited ${amount} to ${userId}`);
+                            // Log Deposit
+                            db.run("INSERT INTO transactions (user_id, type, amount, related_id) VALUES (?, 'deposit', ?, ?)", [userId, amount, 'blockchain_transfer']);
+                            // Notify User
+                            bot.telegram.sendMessage(userId, `💎 **تم استلام إيداع!**\n\n✅ المبلغ: ${amount} TON\nرصيدك الآن محدث.`).catch(e => { });
+                        }
                     });
                 }
             }
@@ -138,12 +144,28 @@ app.post('/api/buy', (req, res) => {
 
             db.serialize(() => {
                 db.run("BEGIN TRANSACTION");
+
+                // 1. Money Transfer
                 db.run("UPDATE users SET balance = balance - ? WHERE telegram_id = ?", [price, buyerId]);
                 db.run("UPDATE users SET balance = balance + ? WHERE telegram_id = ?", [sellerReceive, gift.owner_id]);
+
+                // 2. Transfer Ownership
                 db.run("UPDATE gifts SET owner_id = ?, status = 'deposited', price = NULL WHERE id = ?", [buyerId, giftId]);
+
+                // 3. Log Transactions (Ledger)
+                db.run("INSERT INTO transactions (user_id, type, amount, related_id) VALUES (?, 'buy', ?, ?)", [buyerId, -price, giftId]);
+                db.run("INSERT INTO transactions (user_id, type, amount, related_id) VALUES (?, 'sell', ?, ?)", [gift.owner_id, sellerReceive, giftId]);
+
+                // 4. Track Revenue
+                db.run("INSERT INTO platform_stats (key, value) VALUES ('revenue', ?) ON CONFLICT(key) DO UPDATE SET value = value + ?", [commission, commission]);
+
                 db.run("COMMIT", (err) => {
-                    if (err) res.status(500).json({ error: "Transaction failed" });
-                    else res.json({ success: true });
+                    if (err) return res.status(500).json({ error: "Transaction failed" });
+
+                    // 5. Professional Notification
+                    bot.telegram.sendMessage(gift.owner_id, `✅ **مبروك! تم بيع هديتك!** 🎁\n\n💰 المبلغ المستلم: ${sellerReceive.toFixed(2)} TON\n👤 المشتري: معجب سري\n\nرصيدك الحالي قد زاد! 📈`).catch(e => console.error("Failed to notify seller:", e));
+
+                    res.json({ success: true });
                 });
             });
         });
@@ -163,6 +185,8 @@ app.post('/api/withdraw', async (req, res) => {
         const txSuccess = await tonService.sendTransfer(address, netAmount.toString(), `Withdrawal info`);
         if (txSuccess) {
             db.run("UPDATE users SET balance = balance - ? WHERE telegram_id = ?", [amount, userId], (err) => {
+                // Log Withdraw
+                db.run("INSERT INTO transactions (user_id, type, amount, related_id) VALUES (?, 'withdraw', ?, ?)", [userId, -amount, 'blockchain_transfer']);
                 res.json({ success: true });
             });
         } else {

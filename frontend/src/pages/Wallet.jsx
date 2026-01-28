@@ -14,11 +14,21 @@ const WalletContent = () => {
     const [depositAmount, setDepositAmount] = useState('1');
     const [withdrawAmount, setWithdrawAmount] = useState('');
     const [activeTab, setActiveTab] = useState(null); // 'deposit' or 'withdraw' or null
+    const [transactions, setTransactions] = useState([]);
 
     useEffect(() => {
         fetchUserData();
         fetchDepositAddress();
+        fetchTransactions();
     }, []);
+
+    const fetchTransactions = async () => {
+        try {
+            const res = await fetch(`/api/transactions/${CURRENT_USER_ID}`);
+            const data = await res.json();
+            if (data.data) setTransactions(data.data);
+        } catch (e) { console.error(e); }
+    };
 
     const fetchUserData = async () => {
         try {
@@ -210,15 +220,48 @@ const WalletContent = () => {
                     </button>
                 </div>
 
-                {/* Empty State */}
-                <div className="bg-white/40 border border-sepia/5 rounded-2xl p-10 flex flex-col items-center text-center">
-                    <div className="w-20 h-20 bg-gradient-to-tr from-cream-dark to-white rounded-full flex items-center justify-center shadow-inner mb-4 relative overflow-hidden">
-                        <div className="absolute inset-0 bg-noise opacity-20"></div>
-                        <span className="material-icons-outlined text-4xl text-sepia/40">history</span>
+                {transactions.length === 0 ? (
+                    // Empty State
+                    <div className="bg-white/40 border border-sepia/5 rounded-2xl p-10 flex flex-col items-center text-center">
+                        <div className="w-20 h-20 bg-gradient-to-tr from-cream-dark to-white rounded-full flex items-center justify-center shadow-inner mb-4 relative overflow-hidden">
+                            <div className="absolute inset-0 bg-noise opacity-20"></div>
+                            <span className="material-icons-outlined text-4xl text-sepia/40">history</span>
+                        </div>
+                        <h4 className="text-espresso font-bold mb-1">لا توجد معاملات بعد</h4>
+                        <p className="text-sepia/70 text-sm mb-6 max-w-[200px]">قم بإجراء أول عملية إيداع أو شراء لبدء التداول!</p>
                     </div>
-                    <h4 className="text-espresso font-bold mb-1">لا توجد معاملات بعد</h4>
-                    <p className="text-sepia/70 text-sm mb-6 max-w-[200px]">قم بإجراء أول عملية إيداع أو شراء لبدء التداول!</p>
-                </div>
+                ) : (
+                    <div className="space-y-3">
+                        {transactions.map(tx => (
+                            <div key={tx.id} className="bg-white/60 border border-sepia/5 rounded-xl p-4 flex items-center justify-between shadow-sm hover:shadow-md transition-all">
+                                <div className="flex items-center gap-3">
+                                    <div className={`w-10 h-10 rounded-full flex items-center justify-center ${tx.type === 'deposit' || tx.type === 'sell' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
+                                        }`}>
+                                        <span className="material-icons-outlined text-lg">
+                                            {tx.type === 'deposit' ? 'south_west' :
+                                                tx.type === 'withdraw' ? 'north_east' :
+                                                    tx.type === 'buy' ? 'shopping_bag' : 'sell'}
+                                        </span>
+                                    </div>
+                                    <div>
+                                        <div className="font-bold text-espresso text-sm">
+                                            {tx.type === 'deposit' ? 'إيداع TON' :
+                                                tx.type === 'withdraw' ? 'سحب رصيد' :
+                                                    tx.type === 'buy' ? 'شراء هدية' : 'بيع هدية'}
+                                        </div>
+                                        <div className="text-[10px] text-sepia/60 font-mono">
+                                            {new Date(tx.created_at).toLocaleString('en-US')}
+                                        </div>
+                                    </div>
+                                </div>
+                                <div className={`font-bold font-mono text-sm ${tx.type === 'deposit' || tx.type === 'sell' ? 'text-green-600' : 'text-espresso'
+                                    }`}>
+                                    {tx.amount > 0 ? '+' : ''}{tx.amount.toFixed(2)} TON
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                )}
             </div>
 
             {/* Features / NFTs */}
