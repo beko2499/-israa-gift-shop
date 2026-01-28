@@ -5,12 +5,24 @@ const Profile = () => {
     const user = getTelegramUser();
     const [balance, setBalance] = useState(0);
     const [stats, setStats] = useState({ deposits: 0, withdrawals: 0 });
+    const [photoUrl, setPhotoUrl] = useState(null);
 
     useEffect(() => {
         if (user) {
             fetchUserData();
+            fetchUserPhoto();
         }
     }, []);
+
+    const fetchUserPhoto = async () => {
+        try {
+            const res = await fetch(`/api/user-photo/${user.id}`);
+            const data = await res.json();
+            if (data.photo_url) {
+                setPhotoUrl(data.photo_url);
+            }
+        } catch (err) { console.error("Photo fetch error:", err); }
+    };
 
     const fetchUserData = async () => {
         try {
@@ -60,11 +72,22 @@ const Profile = () => {
 
             {/* Profile Card */}
             <div className="card mb-6 bg-white border border-sepia/10 shadow-lg relative overflow-hidden text-center p-6">
-                <div className="w-24 h-24 bg-gradient-to-tr from-espresso to-[#6F4E37] rounded-full mx-auto mb-4 flex items-center justify-center shadow-lg border-4 border-white">
-                    <span className="text-4xl font-bold text-gold uppercase">
-                        {user.first_name ? user.first_name.charAt(0) : 'U'}
-                    </span>
+                <div className="w-24 h-24 rounded-full mx-auto mb-4 shadow-lg border-4 border-white overflow-hidden bg-gradient-to-tr from-espresso to-[#6F4E37]">
+                    {photoUrl ? (
+                        <img
+                            src={photoUrl}
+                            alt={user.first_name}
+                            className="w-full h-full object-cover"
+                        />
+                    ) : (
+                        <div className="w-full h-full flex items-center justify-center">
+                            <span className="text-4xl font-bold text-gold uppercase">
+                                {user.first_name ? user.first_name.charAt(0) : 'U'}
+                            </span>
+                        </div>
+                    )}
                 </div>
+
 
                 <h3 className="text-xl font-bold text-espresso mb-1">
                     {user.first_name} {user.last_name || ''}

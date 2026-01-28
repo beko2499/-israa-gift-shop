@@ -149,6 +149,34 @@ app.get('/api/transactions/:id', (req, res) => {
     });
 });
 
+// User Profile Photo Endpoint (via Telegram Bot API)
+app.get('/api/user-photo/:id', async (req, res) => {
+    const userId = req.params.id;
+    try {
+        // Get user profile photos from Telegram
+        const photos = await bot.telegram.getUserProfilePhotos(userId, 0, 1);
+
+        if (photos.total_count > 0) {
+            // Get the file_id of the smallest photo (first in the array)
+            const fileId = photos.photos[0][0].file_id;
+
+            // Get the file path
+            const file = await bot.telegram.getFile(fileId);
+
+            // Construct the full URL
+            const photoUrl = `https://api.telegram.org/file/bot${BOT_TOKEN}/${file.file_path}`;
+
+            res.json({ photo_url: photoUrl });
+        } else {
+            res.json({ photo_url: null });
+        }
+    } catch (err) {
+        console.error("Error fetching user photo:", err.message);
+        res.json({ photo_url: null });
+    }
+});
+
+
 app.post('/api/list-item', (req, res) => {
 
     const { userId, giftId, price } = req.body;
