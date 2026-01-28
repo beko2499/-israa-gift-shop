@@ -149,9 +149,8 @@ app.get('/api/transactions/:id', (req, res) => {
     });
 });
 
-});
-
 app.post('/api/list-item', (req, res) => {
+
     const { userId, giftId, price } = req.body;
     db.run("UPDATE gifts SET status = 'listed', price = ? WHERE id = ? AND owner_id = ?", [price, giftId, userId], function (err) {
         if (err) return res.status(500).json({ error: err.message });
