@@ -7,7 +7,7 @@ const db = require('./db');
 const tonService = require('./services/tonService');
 
 const app = express();
-const PORT = 3000;
+const PORT = process.env.PORT || 3000;
 const BOT_TOKEN = process.env.BOT_TOKEN;
 
 app.use(cors());
@@ -182,6 +182,6 @@ app.get(/(.*)/, (req, res) => {
     res.sendFile(path.join(__dirname, '../frontend/dist/index.html'));
 });
 
-app.listen(PORT, () => {
+app.listen(PORT, '0.0.0.0', () => {
     console.log(`Server running on port ${PORT}`);
 });
