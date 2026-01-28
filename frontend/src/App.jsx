@@ -5,6 +5,7 @@ import Marketplace from './pages/Marketplace';
 import MyGifts from './pages/MyGifts';
 import SellGift from './pages/SellGift';
 import Wallet from './pages/Wallet';
+import Profile from './pages/Profile';
 
 function App() {
   return (
@@ -14,7 +15,9 @@ function App() {
           <Route path="/" element={<Marketplace />} />
           <Route path="/gifts" element={<MyGifts />} />
           <Route path="/sell" element={<SellGift />} />
+          <Route path="/sell" element={<SellGift />} />
           <Route path="/wallet" element={<Wallet />} />
+          <Route path="/profile" element={<Profile />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </Layout>

@@ -61,6 +61,8 @@ async function pollDeposits() {
                     }
                 } catch (e) { /* ignore parse error */ }
 
+                console.log(`[DEBUG] Tx Detected: ${amount} TON, Memo: "${memo}"`);
+
                 // Check if it's a User Deposit
                 if (amount > 0 && memo.startsWith('user_')) {
                     const userId = memo.split('user_')[1].trim();

@@ -4,7 +4,11 @@ import { beginCell } from '@ton/ton';
 import MyWalletNFTs from '../components/MyWalletNFTs';
 import ErrorBoundary from '../components/ErrorBoundary';
 
-const CURRENT_USER_ID = 'abubakar';
+import { getTelegramUser } from '../utils/telegram';
+
+const currentUser = getTelegramUser();
+const CURRENT_USER_ID = currentUser.id.toString();
+
 
 const WalletContent = () => {
     const [balance, setBalance] = useState(0);

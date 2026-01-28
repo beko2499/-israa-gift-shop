@@ -37,6 +37,7 @@ const Layout = ({ children }) => {
                 <NavButton icon="inventory_2" label="هداياي" path="/gifts" />
                 <NavButton icon="sell" label="بيع" path="/sell" />
                 <NavButton icon="account_balance_wallet" label="المحفظة" path="/wallet" />
+                <NavButton icon="person" label="حسابي" path="/profile" />
             </nav>
         </div>
     );
