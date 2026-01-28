@@ -140,6 +140,17 @@ app.get('/api/user/:id', (req, res) => {
     });
 });
 
+// Transaction History Endpoint
+app.get('/api/transactions/:id', (req, res) => {
+    const userId = req.params.id;
+    db.all("SELECT * FROM transactions WHERE user_id = ? ORDER BY created_at DESC LIMIT 50", [userId], (err, rows) => {
+        if (err) return res.status(400).json({ error: err.message });
+        res.json({ data: rows || [] });
+    });
+});
+
+});
+
 app.post('/api/list-item', (req, res) => {
     const { userId, giftId, price } = req.body;
     db.run("UPDATE gifts SET status = 'listed', price = ? WHERE id = ? AND owner_id = ?", [price, giftId, userId], function (err) {
